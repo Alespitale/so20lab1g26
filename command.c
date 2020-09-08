@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 struct scommand_s {
 	GSList * str;
@@ -18,6 +19,7 @@ struct pipeline_s {
 
 scommand scommand_new(void){
 	scommand result = calloc(1, sizeof(struct scommand_s));
+	assert(result != NULL);
 	result->str = NULL;
 	result->in = NULL;
 	result->out = NULL;
@@ -95,7 +97,7 @@ char * scommand_get_redir_out(const scommand self){
 	assert(self != NULL);
 	return (self->out);
 }
-
+/*
 char * scommand_to_string(const scommand self){
 	assert(self != NULL);
 	guint len = scommand_length(self);
@@ -120,8 +122,56 @@ char * scommand_to_string(const scommand self){
 	}
 	assert(scommand_is_empty(self) || scommand_get_redir_in(self)==NULL || scommand_get_redir_out(self)==NULL || strlen(result)>0);
 	return result;
-}
+}*/
+/*
+char * scommand_to_string(const scommand self){
+	assert(self!=NULL);
+	char * string = strdup(self->str->data);
+	GSList * auxlist = self->str;
+	auxlist = auxlist->next;
+	while (auxlist->data != NULL){
+		string = strmerge(string,strdup(auxlist->data));
+		auxlist = auxlist->next;
+	}
+	if (scommand_get_redir_out(self) != NULL){
+			gchar * salida = " > ";
+			string = strmerge(string, salida);
+			string = strmerge(string, self->out);
+	}
+	if (scommand_get_redir_in(self) != NULL){
+			gchar * entrada = " < ";
+			string = strmerge(string, entrada);
+			string = strmerge(string, self->in);
+	}
+	free(auxlist);
+	auxlist = NULL;
+	assert(scommand_is_empty(self) || scommand_get_redir_in(self)==NULL || scommand_get_redir_out(self)==NULL || strlen(string)>0);
+	return string;
+}*/
 
+char * scommand_to_string(const scommand self){
+	assert(self!=NULL);
+	GSList * copia = g_slist_copy(self->str);
+	char * string = g_slist_nth_data(copia,0);
+	copia = g_slist_remove(copia,copia->data);
+	while(copia != NULL){
+		string = strmerge(string,g_slist_nth_data(copia,0));
+		copia = g_slist_remove(copia,copia->data);
+	}
+	if (scommand_get_redir_out(self) != NULL){
+			gchar * salida = " > ";
+			string = strmerge(string, salida);
+			string = strmerge(string, self->out);
+	}
+	if (scommand_get_redir_in(self) != NULL){
+			gchar * entrada = " < ";
+			string = strmerge(string, entrada);
+			string = strmerge(string, self->in);
+	}
+	free(copia);
+	assert(scommand_is_empty(self) || scommand_get_redir_in(self)==NULL || scommand_get_redir_out(self)==NULL || strlen(string)>0);
+	return string;
+}
 
 /*---------------------------Pipeline---------------------------------------*/
 
@@ -167,7 +217,7 @@ bool pipeline_is_empty(const pipeline self){
 unsigned int pipeline_length(const pipeline self){
 	assert(self != NULL);
 	guint n = g_slist_length(self->sc_pipe);
-	assert((pipeline_length(self)==0) == pipeline_is_empty(self));
+	assert((n==0) == pipeline_is_empty(self));
 	return n;
 }
 
