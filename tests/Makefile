@@ -7,7 +7,7 @@ TARGETS=runner runner-command leaktest
 SOURCES=$(shell echo *.c)
 
 # Modulos que ya se compilaron
-COMMON_OBJECTS=../command.o
+COMMON_OBJECTS=../command.o ../strextra.o
 PARSER_OBJECTS=../parser.o ../lexer.o
 
 # Al modulo ejecutor lo recompilamos en este directorio usando mocks

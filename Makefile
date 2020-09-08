@@ -28,7 +28,7 @@ clean:
 test: $(OBJECTS)
 	make -C tests test
 
-test-command: command.o
+test-command: command.o strextra.o
 	make -C tests test-command
 
 memtest: $(OBJECTS)
