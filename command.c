@@ -8,13 +8,8 @@
 
 struct scommand_s {
 	GSList * str;
-	gchar * in;
-	gchar * out;
-};
-
-struct pipeline_s {
-	GSList * sc_pipe;
-	bool wait;
+	char * in;
+	char * out;
 };
 
 scommand scommand_new(void){
@@ -60,12 +55,22 @@ void scommand_pop_front(scommand self){
 
 void scommand_set_redir_in(scommand self, char * filename){
 	assert(self != NULL);
-	self->in = filename;
+	if(filename != NULL){		
+		self->in = strdup(filename);
+		free(filename);
+	}else{
+		self->in = NULL;
+	}
 }
 
 void scommand_set_redir_out(scommand self, char * filename){
 	assert(self != NULL);
-	self->out = filename;
+	if(filename != NULL){
+		self->out = strdup(filename);
+		free(filename);
+	}else{
+		self->out= NULL;
+	}
 }
 
 bool scommand_is_empty(const scommand self){
@@ -97,83 +102,33 @@ char * scommand_get_redir_out(const scommand self){
 	assert(self != NULL);
 	return (self->out);
 }
-/*
-char * scommand_to_string(const scommand self){
-	assert(self != NULL);
-	guint len = scommand_length(self);
-	gchar * result = NULL;
-	if (!scommand_is_empty(self)){
-		gchar * p = g_slist_nth_data(self->str,1);
-		result = strmerge(scommand_front(self),p);
-		for (guint i = 2 ; i < len ; i++){
-			p = g_slist_nth_data(self->str,i);
-			result = strmerge(result,p);
-		}
-		if (scommand_get_redir_out(self) != NULL){
-			gchar * salida = " > ";
-			result = strmerge(result, salida);
-			result = strmerge(result, self->out);
-		}
-		if (scommand_get_redir_in(self) != NULL){
-			gchar * entrada = " < ";
-			result = strmerge(result, entrada);
-			result = strmerge(result, self->in);
-		}
-	}
-	assert(scommand_is_empty(self) || scommand_get_redir_in(self)==NULL || scommand_get_redir_out(self)==NULL || strlen(result)>0);
-	return result;
-}*/
-/*
-char * scommand_to_string(const scommand self){
-	assert(self!=NULL);
-	char * string = strdup(self->str->data);
-	GSList * auxlist = self->str;
-	auxlist = auxlist->next;
-	while (auxlist->data != NULL){
-		string = strmerge(string,strdup(auxlist->data));
-		auxlist = auxlist->next;
-	}
-	if (scommand_get_redir_out(self) != NULL){
-			gchar * salida = " > ";
-			string = strmerge(string, salida);
-			string = strmerge(string, self->out);
-	}
-	if (scommand_get_redir_in(self) != NULL){
-			gchar * entrada = " < ";
-			string = strmerge(string, entrada);
-			string = strmerge(string, self->in);
-	}
-	free(auxlist);
-	auxlist = NULL;
-	assert(scommand_is_empty(self) || scommand_get_redir_in(self)==NULL || scommand_get_redir_out(self)==NULL || strlen(string)>0);
-	return string;
-}*/
 
 char * scommand_to_string(const scommand self){
 	assert(self!=NULL);
-	GSList * copia = g_slist_copy(self->str);
-	char * string = g_slist_nth_data(copia,0);
-	copia = g_slist_remove(copia,copia->data);
-	while(copia != NULL){
-		string = strmerge(string,g_slist_nth_data(copia,0));
-		copia = g_slist_remove(copia,copia->data);
+	guint len_list = g_slist_length(self->str);
+	char * string = strdup("");
+	for(unsigned int i = 0 ; i < len_list; i++){
+		string = strmerge(string, g_slist_nth_data(self->str,i));
+		//string = strmerge(string, strdup(" "));
 	}
-	if (scommand_get_redir_out(self) != NULL){
-			gchar * salida = " > ";
-			string = strmerge(string, salida);
-			string = strmerge(string, self->out);
+	if(scommand_get_redir_in(self) != NULL){
+		string = strmerge(string, strdup("<")); 
+		string = strmerge(string, self->in);
 	}
-	if (scommand_get_redir_in(self) != NULL){
-			gchar * entrada = " < ";
-			string = strmerge(string, entrada);
-			string = strmerge(string, self->in);
+	if(scommand_get_redir_out(self) != NULL){
+		string = strmerge(string, strdup(">"));
+		string = strmerge(string, self->out);
 	}
-	free(copia);
 	assert(scommand_is_empty(self) || scommand_get_redir_in(self)==NULL || scommand_get_redir_out(self)==NULL || strlen(string)>0);
 	return string;
 }
 
 /*---------------------------Pipeline---------------------------------------*/
+
+struct pipeline_s {
+	GSList * sc_pipe;
+	bool wait;
+};
 
 pipeline pipeline_new(void){
 	pipeline pipe = calloc(1,sizeof(struct pipeline_s));
@@ -194,8 +149,6 @@ pipeline pipeline_destroy(pipeline self){
 void pipeline_push_back(pipeline self, scommand sc){
 	assert(self != NULL && sc != NULL);
 	self->sc_pipe = g_slist_append(self->sc_pipe, sc);
-	sc = scommand_destroy(sc);
-	sc = NULL;
 	assert(!pipeline_is_empty(self));
 }
 
@@ -235,20 +188,18 @@ bool pipeline_get_wait(const pipeline self){
 
 char * pipeline_to_string(const pipeline self){
 	assert(self!=NULL);
-	gchar * c = " | ";
-	gchar * merge = NULL;
+	gchar * pipe = strdup(" | ");
+	gchar * merge = strdup("");
+	gchar * cmd = NULL;
 	guint len = pipeline_length(self);
-	scommand q = g_slist_nth_data(self->sc_pipe,0);
-	if(len == 1){
-		merge = scommand_to_string(q);
-	}else{
-		for (guint i = 0 ; i < len-1 ; i++){
-			q = g_slist_nth_data(self->sc_pipe,i);
-			merge = scommand_to_string(q);
-			merge = strmerge(merge,c);
+	for (guint i = 0 ; i < len ; i++){
+		cmd = scommand_to_string(g_slist_nth_data(self->sc_pipe,i));
+		merge = strmerge(merge,cmd);
+		if(i != (len-1)){
+			merge = strmerge(merge,pipe);
+		}else{
+			merge = strmerge(merge,strdup("&"));
 		}
-		q = g_slist_nth_data(self->sc_pipe,len);
-		merge = scommand_to_string(q);
 	}
 	assert(pipeline_is_empty(self) || pipeline_get_wait(self) || strlen(merge)>0);
 	return merge;
