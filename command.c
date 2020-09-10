@@ -62,8 +62,7 @@ void scommand_set_redir_out(scommand self, char * filename){
 
 bool scommand_is_empty(const scommand self){
 	assert(self != NULL);
-	bool b = (self->str == NULL);
-	return b;
+	return (self->str == NULL);
 }
 
 unsigned int scommand_length(const scommand self){
@@ -140,8 +139,6 @@ pipeline pipeline_destroy(pipeline self){
 void pipeline_push_back(pipeline self, scommand sc){
 	assert(self != NULL && sc != NULL);
 	self->sc_pipe = g_slist_append(self->sc_pipe, sc);
-	//sc = scommand_destroy(sc);
-	//sc = NULL;
 	assert(!pipeline_is_empty(self));
 }
 
