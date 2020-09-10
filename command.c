@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <stdio.h>
 
 struct scommand_s {
 	GSList * str;
@@ -42,9 +41,7 @@ scommand scommand_destroy(scommand self){
 
 void scommand_push_back(scommand self, char * argument){
 	assert(self != NULL && argument != NULL);
-	self->str = g_slist_append(self->str, strdup(argument));
-	free(argument);
-	argument = NULL;
+	self->str = g_slist_append(self->str, argument);
 	assert(!scommand_is_empty(self));
 }
 
@@ -55,22 +52,12 @@ void scommand_pop_front(scommand self){
 
 void scommand_set_redir_in(scommand self, char * filename){
 	assert(self != NULL);
-	if(filename != NULL){		
-		self->in = strdup(filename);
-		free(filename);
-	}else{
-		self->in = NULL;
-	}
+	self->in = filename;
 }
 
 void scommand_set_redir_out(scommand self, char * filename){
 	assert(self != NULL);
-	if(filename != NULL){
-		self->out = strdup(filename);
-		free(filename);
-	}else{
-		self->out= NULL;
-	}
+	self->out = filename;
 }
 
 bool scommand_is_empty(const scommand self){
@@ -103,20 +90,24 @@ char * scommand_get_redir_out(const scommand self){
 	return (self->out);
 }
 
+
 char * scommand_to_string(const scommand self){
 	assert(self!=NULL);
 	guint len_list = g_slist_length(self->str);
 	char * string = strdup("");
 	for(unsigned int i = 0 ; i < len_list; i++){
 		string = strmerge(string, g_slist_nth_data(self->str,i));
-		//string = strmerge(string, strdup(" "));
+		string = strmerge(string, strdup(" "));
 	}
 	if(scommand_get_redir_in(self) != NULL){
 		string = strmerge(string, strdup("<")); 
+		string = strmerge(string, strdup(" "));
 		string = strmerge(string, self->in);
+		string = strmerge(string, strdup(" "));
 	}
 	if(scommand_get_redir_out(self) != NULL){
 		string = strmerge(string, strdup(">"));
+		string = strmerge(string, strdup(" "));
 		string = strmerge(string, self->out);
 	}
 	assert(scommand_is_empty(self) || scommand_get_redir_in(self)==NULL || scommand_get_redir_out(self)==NULL || strlen(string)>0);
@@ -149,6 +140,8 @@ pipeline pipeline_destroy(pipeline self){
 void pipeline_push_back(pipeline self, scommand sc){
 	assert(self != NULL && sc != NULL);
 	self->sc_pipe = g_slist_append(self->sc_pipe, sc);
+	//sc = scommand_destroy(sc);
+	//sc = NULL;
 	assert(!pipeline_is_empty(self));
 }
 
