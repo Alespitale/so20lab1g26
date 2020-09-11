@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 struct scommand_s {
-	GSList * str;
+	GQueue * str;
 	char * in;
 	char * out;
 };
@@ -14,7 +14,7 @@ struct scommand_s {
 scommand scommand_new(void){
 	scommand result = calloc(1, sizeof(struct scommand_s));
 	assert(result != NULL);
-	result->str = NULL;
+	result->str = g_queue_new();
 	result->in = NULL;
 	result->out = NULL;
 	assert(result != NULL && scommand_is_empty(result) && scommand_get_redir_in(result) == NULL &&
@@ -24,7 +24,7 @@ scommand scommand_new(void){
 
 scommand scommand_destroy(scommand self){	
 	assert(self != NULL);
-	g_slist_free_full(self->str, g_free);
+	g_queue_free_full(self->str, g_free);
 	if(self->in != NULL){
 		g_free(self->in);
 		self->in = NULL;
@@ -41,13 +41,13 @@ scommand scommand_destroy(scommand self){
 
 void scommand_push_back(scommand self, char * argument){
 	assert(self != NULL && argument != NULL);
-	self->str = g_slist_append(self->str,argument);
-	assert(!scommand_is_empty(self));
+	g_queue_push_tail(self->str,argument);
 }
 
 void scommand_pop_front(scommand self){
 	assert(self!=NULL && !scommand_is_empty(self));
-	self->str = g_slist_remove(self->str,g_slist_nth_data(self->str,0));
+    gpointer head = g_queue_pop_head(self->str);
+    g_free(head);
 }
 
 void scommand_set_redir_in(scommand self, char * filename){
@@ -64,19 +64,18 @@ void scommand_set_redir_out(scommand self, char * filename){
 
 bool scommand_is_empty(const scommand self){
 	assert(self != NULL);
-	return (self->str == NULL);
+	return (g_queue_is_empty(self->str));
 }
 
 unsigned int scommand_length(const scommand self){
 	assert(self != NULL);
-	guint n = g_slist_length(self->str);
-	assert((n==0) == scommand_is_empty(self));
+	guint n = g_queue_get_length(self->str);	assert((n==0) == scommand_is_empty(self));
 	return n;
 }
 
 char * scommand_front(const scommand self){
 	assert(self != NULL && !scommand_is_empty(self));
-	char * result = g_slist_nth_data(self->str,0);
+	char * result = g_queue_peek_head(self->str);
 	assert(result != NULL);
 	return result;
 }
@@ -91,13 +90,12 @@ char * scommand_get_redir_out(const scommand self){
 	return (self->out);
 }
 
-
 char * scommand_to_string(const scommand self){
 	assert(self!=NULL);
-	guint len_list = g_slist_length(self->str);
+	guint len_list = g_queue_get_length(self->str);
 	gchar * string = strdup("");
 	for(unsigned int i = 0 ; i < len_list; i++){
-		string = strmerge(string, g_slist_nth_data(self->str,i));
+		string = strmerge(string, g_queue_peek_nth(self->str,i));
 		string = strmerge(string, " ");
 	}
 	if(scommand_get_redir_in(self) != NULL){
@@ -111,7 +109,6 @@ char * scommand_to_string(const scommand self){
 		string = strmerge(string, " ");
 		string = strmerge(string, self->out);
 	}
-	free(strdup(""));
 	assert(scommand_is_empty(self) || scommand_get_redir_in(self)==NULL || scommand_get_redir_out(self)==NULL || strlen(string)>0);
 	return string;
 }
@@ -119,13 +116,13 @@ char * scommand_to_string(const scommand self){
 /*---------------------------Pipeline---------------------------------------*/
 
 struct pipeline_s {
-	GSList * sc_pipe;
+	GQueue * sc_pipe;
 	bool wait;
 };
 
 pipeline pipeline_new(void){
 	pipeline pipe = calloc(1,sizeof(struct pipeline_s));
-	pipe->sc_pipe = NULL;
+	pipe->sc_pipe = g_queue_new();
 	pipe->wait = true;
 	assert(pipe != NULL && pipeline_is_empty(pipe) && pipeline_get_wait(pipe));
 	return pipe;
@@ -137,7 +134,7 @@ static void destroy_scmd(gpointer scmd){
 
 pipeline pipeline_destroy(pipeline self){
 	assert(self != NULL);
-	g_slist_free_full(self->sc_pipe, &destroy_scmd);
+	g_queue_free_full(self->sc_pipe, &destroy_scmd);
 	free(self);
 	self = NULL;
 	return self;
@@ -145,13 +142,15 @@ pipeline pipeline_destroy(pipeline self){
 
 void pipeline_push_back(pipeline self, scommand sc){
 	assert(self != NULL && sc != NULL);
-	self->sc_pipe = g_slist_append(self->sc_pipe,sc);
+	g_queue_push_tail(self->sc_pipe,sc);
 	assert(!pipeline_is_empty(self));
 }
 
 void pipeline_pop_front(pipeline self){
 	assert(self != NULL && !pipeline_is_empty(self));
-	self->sc_pipe = g_slist_remove(self->sc_pipe,self->sc_pipe->data);
+    gpointer head = g_queue_pop_head(self->sc_pipe);
+    head = scommand_destroy(head);
+    head = NULL;
 }
 
 void pipeline_set_wait(pipeline self, const bool w){
@@ -161,19 +160,20 @@ void pipeline_set_wait(pipeline self, const bool w){
 
 bool pipeline_is_empty(const pipeline self){
 	assert(self != NULL);
-	return (g_slist_length(self->sc_pipe) == 0);
+	bool b;
+	return (b = g_queue_is_empty(self->sc_pipe));
 }
 
 unsigned int pipeline_length(const pipeline self){
 	assert(self != NULL);
-	guint n = g_slist_length(self->sc_pipe);
+	guint n = g_queue_get_length(self->sc_pipe);
 	assert((n==0) == pipeline_is_empty(self));
 	return n;
 }
 
 scommand pipeline_front(const pipeline self){
 	assert(self!=NULL && !pipeline_is_empty(self));
-	scommand sc = g_slist_nth_data(self->sc_pipe,0);
+	scommand sc = g_queue_peek_head(self->sc_pipe);
 	assert(sc != NULL);
 	return sc;
 }
@@ -189,7 +189,7 @@ char * pipeline_to_string(const pipeline self){
 	gchar * cmd = NULL;
 	guint len = pipeline_length(self);
 	for (guint i = 0 ; i < len ; i++){
-		cmd = scommand_to_string(g_slist_nth_data(self->sc_pipe,i));
+		cmd = scommand_to_string(g_queue_peek_nth(self->sc_pipe,i));
 		merge = strmerge(merge,cmd);
 		g_free(cmd);
 		if(i != (len-1)){
@@ -198,7 +198,6 @@ char * pipeline_to_string(const pipeline self){
 			merge = strmerge(merge," &");
 		}
 	}
-	free(strdup(""));
 	assert(pipeline_is_empty(self) || pipeline_get_wait(self) || strlen(merge)>0);
 	return merge;
 }
