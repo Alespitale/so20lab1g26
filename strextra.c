@@ -6,10 +6,10 @@
 
 char * strmerge(char *s1, char *s2){
   assert(s1 != NULL &&  s2 != NULL);
-  char * merge = calloc(strlen(s1) + strlen(s2) + 1, sizeof(char));
-  assert(merge != NULL);
-  strcpy(merge, s1);
-  strcat(merge, s2);
-  assert((merge != NULL) && strlen(merge) == strlen(s1) + strlen(s2));
-  return (merge);
+  gsize size = (strlen(s1) + strlen(s2) + 1);
+  s1 = realloc(s1,size);
+  assert(s1 != NULL);
+  strcat(s1,s2);
+  assert((s1 != NULL) && strlen(s1) == size-1);
+  return s1;
 }
