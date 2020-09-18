@@ -180,7 +180,7 @@ scommand pipeline_front(const pipeline self){
 
 bool pipeline_get_wait(const pipeline self){
 	assert(self!=NULL);
-	return (self->wait == true);
+	return (self->wait);
 }
 
 char * pipeline_to_string(const pipeline self){
