@@ -18,7 +18,7 @@ static char ** scommand_adapted(scommand self){
         argv[i] = strdup(scommand_front(self));
         scommand_pop_front(self);
     }
-        argv[(len+1)]= NULL;
+        argv[(len)]= NULL;
     return argv;
 }
 
@@ -74,21 +74,21 @@ void execute_pipeline(pipeline apipe){
                 }else{
                         // esto da leak
                 }
-            }else {     // hijo
+            }else{     // hijo
                 if (scommand_get_redir_in(pipeline_front(apipe)) == NULL && scommand_get_redir_out(pipeline_front(apipe)) == NULL){
                     execvp(cmd_adapted[0],cmd_adapted);
                 }else if (scommand_get_redir_in(pipeline_front(apipe)) == NULL && scommand_get_redir_out(pipeline_front(apipe)) != NULL){
-                    int fd = open(scommand_get_redir_out(pipeline_front(apipe)),0,O_CREAT|O_WRONLY|O_TRUNC);
+                    int fd = open(scommand_get_redir_out(pipeline_front(apipe)),O_CREAT|O_WRONLY,0);
                     check_fd_out(fd);
                     execvp(cmd_adapted[0],cmd_adapted);
                 }else if(scommand_get_redir_in(pipeline_front(apipe)) != NULL && scommand_get_redir_out(pipeline_front(apipe)) == NULL){
-                    int fd = open(scommand_get_redir_in(pipeline_front(apipe)),0,O_CREAT|O_WRONLY|O_TRUNC);
+                    int fd = open(scommand_get_redir_in(pipeline_front(apipe)),O_CREAT|O_RDONLY,S_IRUSR);
                     check_fd_in(fd);
                     execvp(cmd_adapted[0],cmd_adapted);
                 }else{
-                    int fd1 = open(scommand_get_redir_in(pipeline_front(apipe)),0,O_CREAT|O_WRONLY|O_TRUNC);
+                    int fd1 = open(scommand_get_redir_in(pipeline_front(apipe)),O_CREAT|O_RDONLY ,S_IRUSR);
                     check_fd_in(fd1);
-                    int fd = open(scommand_get_redir_out(pipeline_front(apipe)),0,O_CREAT|O_WRONLY|O_TRUNC);
+                    int fd = open(scommand_get_redir_out(pipeline_front(apipe)),O_CREAT|O_WRONLY,S_IWUSR);
                     check_fd_out(fd);
                     execvp(cmd_adapted[0],cmd_adapted);                    
                 }
@@ -97,7 +97,7 @@ void execute_pipeline(pipeline apipe){
     }
 }   
 /*
-    if(N >= 1){             //Es un comando simple
+    if(N >=1){             //Es un comando simple
             for (guint i= 0; i<N; i++){
                 if(builtin_is_internal(pipeline_front(apipe))){            // Es comando interno
                 builtin_exec(pipeline_front(apipe));
