@@ -195,7 +195,8 @@ char * pipeline_to_string(const pipeline self){		// Representación del pipeline
 		g_free(cmd);								// Libero memoria, (se creo memoria al usar scoomand_to_string)
 		if(i != (len-1)){							// Agrego pipe en cada ciclo si no es el ultimo comando
 			merge = strmerge(merge," | ");
-		}else{										// Agrego & al final del ultimo commando simple
+		}										
+		if(i == len-1 && !pipeline_get_wait(self)){ // Agrego & al final del ultimo commando simple si el pipeline no espera
 			merge = strmerge(merge," &");
 		}
 	}
