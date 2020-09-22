@@ -1,14 +1,15 @@
-#include "execute.h"
-#include "builtin.h"
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <gmodule.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
-#include <sys/stat.h> 
-#include <fcntl.h>
+#include "execute.h"        // Cabecera de execute
+#include "builtin.h"        // Cabecera de builtin
+#include <sys/types.h>      // fork, wait, open
+#include <unistd.h>         // fork, exec, close
+#include <sys/wait.h>       // wait
+#include <gmodule.h>        // Librerias para el TAD GQueue
+#include <stdio.h>          // estandar input ouput
+#include <string.h>         // Lib string
+#include <assert.h>         // Lib assert
+#include <stdlib.h>         // Memoria dinamica
+#include <sys/stat.h>       // open
+#include <fcntl.h>          // open
 #include "tests/syscall_mock.h"
 #define READ 0
 #define WRITE 1
