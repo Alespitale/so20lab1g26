@@ -1,15 +1,14 @@
-#include "execute.h"        // Cabecera de execute
-#include "builtin.h"        // Cabecera de builtin
-#include <sys/types.h>      // fork, wait, open
-#include <unistd.h>         // fork, exec, close
-#include <sys/wait.h>       // wait
-#include <gmodule.h>        // Librerias para el TAD GQueue
-#include <stdio.h>          // estandar input ouput
-#include <string.h>         // Lib string
-#include <assert.h>         // Lib assert
-#include <stdlib.h>         // Memoria dinamica
-#include <sys/stat.h>       // open
-#include <fcntl.h>          // open
+#include "execute.h"
+#include "builtin.h"
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <gmodule.h>
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#include <sys/stat.h> 
+#include <fcntl.h>
 #include "tests/syscall_mock.h"
 #define READ 0
 #define WRITE 1
@@ -28,30 +27,30 @@ return argv;
 static void check_fd_out(int fd){   //Chequeo de fallos para out
     if (fd == -1){
         perror("fallo open");
-        exit(0);
+        exit(EXIT_FAILURE);
     }
     if(dup2(fd,1) == -1){
         perror("fallo dup");
-        exit(0);
+        exit(EXIT_FAILURE);
     }
     if(close(fd) == -1){
         perror("fallo close");
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 }
 
 static void check_fd_in(int fd){    // Chequeo de fallos para in
     if (fd == -1){
         perror("fallo open");
-        exit(0);
+        exit(EXIT_FAILURE);
     }
     if(dup2(fd,0) == -1){
         perror("fallo dup");
-        exit(0);
+        exit(EXIT_FAILURE);
     }
     if(close(fd) == -1){
         perror("fallo close");
-        exit(0);
+        exit(EXIT_FAILURE);
     }
 }
 
@@ -63,7 +62,7 @@ static void ex_cmd(pipeline apipe){     //Ejecuta comando interno o externo sin 
         pid_t pid = fork();
         if (pid < 0){           // fork failed; exit
             fprintf(stderr, "fork failed\n");
-            exit(1);
+            exit(EXIT_FAILURE);
         }else if ( pid > 0){    // padre
             if (pipeline_get_wait(apipe)){
                 wait(NULL);
@@ -120,7 +119,7 @@ void execute_pipeline(pipeline apipe){
                 pid = fork();
                 if(pid < 0){
                     fprintf(stderr, "fork failed\n");
-                    exit(1);
+                    exit(EXIT_FAILURE);
                 }else if (pid == 0){                     // hijo
                     close(fd[i][READ]);                  // cerramos entrada de lectura del pipe
                     dup2(fd[i][WRITE],STDOUT_FILENO);    // cambiamos el out
@@ -134,7 +133,7 @@ void execute_pipeline(pipeline apipe){
                 pid = fork();
                 if(pid < 0){                            //fallo fork
                     fprintf(stderr, "fork failed\n");
-                    exit(1);
+                    exit(EXIT_FAILURE);
                 }else if (pid == 0){        //hijo 
                     close(fd[i-1][WRITE]);
                     dup2(fd[i-1][READ],STDIN_FILENO);
@@ -151,7 +150,7 @@ void execute_pipeline(pipeline apipe){
                 pid = fork();
                 if ( pid < 0) {
                     fprintf(stderr, "fork failed\n");
-                    exit(1);
+                    exit(EXIT_FAILURE);
                   }else if (pid == 0){
                     close(fd[i-1][WRITE]);
                     dup2(fd[i-1][READ],STDIN_FILENO);
