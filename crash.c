@@ -1,12 +1,14 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "command.h"    //cabecera
+#include "parser.h"     // cabecera
+#include "execute.h"    // cabecera
+#include "builtin.h"   // cabecera
+#include <stdlib.h>    //libreria estandar
+#include <stdio.h>     // input/output
+#include <unistd.h>     //--
+#include <sys/types.h>  //wait
+#include <sys/wait.h>   // wait
+#include <limits.h> // para user, hostname
 
-#include "command.h"
-#include "parser.h"
-#include "execute.h"
-#include "builtin.h"
-#include <limits.h>
 
 int main(void){ 
     printf("\n                               ########################## Crash by Tres Acordes ########################## \n\n");
@@ -17,18 +19,17 @@ int main(void){
     getcwd(direc,sizeof(direc));
     Parser parser = parser_new(stdin); 
     if(parser == NULL){
-        perror("Fallo el Parser");
+        perror("Fallo el Parser\n");
         exit(EXIT_FAILURE);
     }
-    pipeline pipe = pipeline_new();
     while(!parser_at_eof(parser)){
         printf("%s@%s:~%s-> " , username,hostname,direc);
-        pipe = parse_pipeline(parser);
+        pipeline pipe = parse_pipeline(parser);
+        while(waitpid(-1,0,WNOHANG)>0);
         if(pipe != NULL){
         execute_pipeline(pipe);
+        pipeline_destroy(pipe);
         }
     }
-    pipeline_destroy(pipe);
-    parser_destroy(parser);
-return 0;
+    return 0;
 }
