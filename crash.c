@@ -25,11 +25,11 @@ int main(void){
     while(!parser_at_eof(parser)){
         printf("%s@%s:~%s-> " , username,hostname,direc);
         pipeline pipe = parse_pipeline(parser);
-        while(waitpid(-1,0,WNOHANG)>0);
-        if(pipe != NULL){
-        execute_pipeline(pipe);
-        pipeline_destroy(pipe);
+        if (pipe != NULL){
+            execute_pipeline(pipe);
+            pipe = pipeline_destroy(pipe);
         }
     }
+    parser = parser_destroy(parser);
     return 0;
 }

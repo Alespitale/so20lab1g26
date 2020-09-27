@@ -4,6 +4,9 @@
 #include <stdlib.h>         // Para tener la libreria standar
 #include <string.h>         // Para usar funciones de cadena de caracteres
 #include "tests/syscall_mock.h" // chequeo del test
+#include <sys/types.h>  //wait
+#include <sys/wait.h>   // wait
+#include <stdio.h>
 
 bool builtin_is_internal(scommand cmd){         // Comparamos si el primer comando es cd o exit
     assert(cmd != NULL);
@@ -19,9 +22,14 @@ void builtin_exec(scommand cmd){
         chdir(scommand_front(cmd));                 // Ejecutamos la syscall
         cmd = scommand_destroy(cmd);                // Destruimos el scommand
     }else {                                         // El comando es exit
+        if(waitpid(-1,0,WNOHANG)==0){               // el mata zombies
+            pid_t pid = getppid();
+            printf("mi pid es %d\n", pid);
+            kill(pid,SIGKILL);
+        }
         cmd = scommand_destroy(cmd);                
         exit(EXIT_SUCCESS);                         // Usamos funcion exit 
     }
-} 
+}
 
 

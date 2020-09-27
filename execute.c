@@ -77,6 +77,7 @@ static void ex_cmd(pipeline apipe){     //Ejecuta comando interno o externo sin 
                 int fd = open(out, O_CREAT|O_WRONLY,S_IWUSR);
                 check_fd_out(fd);
                 execvp(cmd_adapted[0],cmd_adapted);
+                perror("error exec");
             
             }else if(in != NULL && out == NULL){    // Hay solo in
                 int fd = open(in, O_CREAT|O_RDONLY,S_IRUSR);
