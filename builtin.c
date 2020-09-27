@@ -20,14 +20,12 @@ void builtin_exec(scommand cmd){
     if (strcmp(scommand_front(cmd),"cd") == 0){     // Comparamos si el comando es cd
         scommand_pop_front(cmd);                    // Sacamos el primer elemento
         chdir(scommand_front(cmd));                 // Ejecutamos la syscall
-        cmd = scommand_destroy(cmd);                // Destruimos el scommand
-    }else {                                         // El comando es exit
+    }else{                                         // El comando es exit
         if(waitpid(-1,0,WNOHANG)==0){               // el mata zombies
             pid_t pid = getppid();
             printf("mi pid es %d\n", pid);
             kill(pid,SIGKILL);
         }
-        cmd = scommand_destroy(cmd);                
         exit(EXIT_SUCCESS);                         // Usamos funcion exit 
     }
 }

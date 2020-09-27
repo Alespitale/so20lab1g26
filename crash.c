@@ -16,13 +16,13 @@ int main(void){
     char direc[1000];
     char * username = getenv("USER");
     gethostname(hostname,sizeof(hostname));
-    getcwd(direc,sizeof(direc));
     Parser parser = parser_new(stdin); 
     if(parser == NULL){
         perror("Fallo el Parser\n");
         exit(EXIT_FAILURE);
     }
     while(!parser_at_eof(parser)){
+        getcwd(direc,sizeof(direc));
         printf("%s@%s:~%s-> " , username,hostname,direc);
         pipeline pipe = parse_pipeline(parser);
         if (pipe != NULL){
