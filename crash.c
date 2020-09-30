@@ -16,7 +16,7 @@ int main(void){
     char direc[1000];
     char * username = getenv("USER");
     gethostname(hostname,sizeof(hostname));
-    Parser parser = parser_new(stdin); 
+    Parser parser = parser_new(stdin);
     if(parser == NULL){
         perror("Fallo el Parser\n");
         exit(EXIT_FAILURE);

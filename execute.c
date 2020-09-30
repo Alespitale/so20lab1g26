@@ -74,20 +74,20 @@ static void ex_cmd(pipeline apipe){     //Ejecuta comando interno o externo sin 
                 execvp(cmd_adapted[0],cmd_adapted);
             
             }else if (in == NULL && out != NULL){   // Hay solo out
-                int fd = open(out, O_CREAT|O_WRONLY,S_IWUSR);
+                int fd = open(out, O_CREAT | O_WRONLY, S_IWUSR | S_IRUSR);  // agregamos permiso de lectura
                 check_fd_out(fd);
                 execvp(cmd_adapted[0],cmd_adapted);
                 perror("error exec");
             
             }else if(in != NULL && out == NULL){    // Hay solo in
-                int fd = open(in, O_CREAT|O_RDONLY,S_IRUSR);
+                int fd = open(in,O_RDONLY, S_IRUSR);
                 check_fd_in(fd); 
                 execvp(cmd_adapted[0],cmd_adapted);
             
             }else{                                  // Hay in y out
-                int fd1 = open(in, O_CREAT|O_RDONLY ,S_IRUSR);
+                int fd1 = open(in, O_RDONLY ,S_IRUSR); // agregamos permiso de lectura
                 check_fd_in(fd1);
-                int fd = open(out, O_CREAT|O_WRONLY,S_IWUSR);
+                int fd = open(out, O_CREAT|O_WRONLY,S_IWUSR | S_IRUSR);
                 check_fd_out(fd);
                 execvp(cmd_adapted[0],cmd_adapted);                    
             }
